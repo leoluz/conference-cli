@@ -12,12 +12,12 @@ var client = restify.createJsonClient({
 cli.arguments('<file>')
     .option('-r, --resource <resource name>', 'The resource name')
     .action(function(file) {
-        console.log('resource: %s file: %s', cli.resource, file)
         var payload = require(file)
 
         var options = {
           path: '/talks',
           headers: {
+            'Authorization': '...',
             'hybris-tenant': 'conference'
           }
         }
