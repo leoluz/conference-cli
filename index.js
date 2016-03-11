@@ -60,8 +60,9 @@ function buildOptions(endpoint) {
     return {
       path: endpoint,
       headers: {
-        'Authorization': token,
-        'hybris-tenant': 'conference'
+		'Authorization': 'Bearer '+token,
+		'hybris-tenant': 'conference',
+		'hybris-scopes': 'hybris.conference_admin'
       }
     };
 }
