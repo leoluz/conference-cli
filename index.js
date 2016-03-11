@@ -2,6 +2,7 @@
 var cli = require('commander');
 var restify = require('restify');
 var assert = require('assert');
+var _ = require('underscore');
 var fs = require('fs');
 
 var token = fs.readFileSync('token', 'utf8').toString().split('\n')[0];
@@ -37,7 +38,7 @@ function createTalks(talks) {
         client.post(buildOptions('/talks'), talk, function(err, req, res, obj) {
             assert.ifError(err);
             printTalkInfo(obj.id);
-        })
+        });
     }
 }
 
