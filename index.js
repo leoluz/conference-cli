@@ -1,11 +1,17 @@
 #!/usr/bin/env node
 var cli = require('commander');
-var restify = require('restify');
+var restify = require('restify'); 
 var assert = require('assert');
-var _ = require('underscore');
 var fs = require('fs');
+var sync = require('synchronize');
+var ProgressBar = require('progress');
 
 var token = fs.readFileSync('token', 'utf8').toString().split('\n')[0];
+var opts = {
+    width: 40,
+    total: talks.length-1,
+    clear: true
+};
 
 if (!token) {
     console.log('Error: token file not found!');
@@ -33,13 +39,26 @@ cli.arguments('<file>')
     .parse(process.argv);
 
 function createTalks(talks) {
-    for (var i=0; i < talks.length; i++) {
-        var talk = talks[i];
-        client.post(buildOptions('/talks'), talk, function(err, req, res, obj) {
-            assert.ifError(err);
-            printTalkInfo(obj.id);
+    sync(client, 'post');
+    var bar = new ProgressBar('  Creating talks [:bar] :percent :etas', opts);
+    var result = {};
+    sync.fiber(function() {
+        talks.forEach(function(talk) {
+            var response = client.post(buildOptions('/talks'), talk).res;
+            var talkId = JSON.parse(response.body).id;
+            var key = talk.startTime;
+            if (key in result) {
+                result[key].push(talkId);
+            } else {
+                result[key] = [talkId];
+            }
+            bar.tick(1);
         });
-    }
+        var sortedKeys = Object.keys(result).sort();
+        sortedKeys.forEach(function(key) {
+            console.log('%s\n%s\n', key, result[key]);
+        });
+    });
 }
 
 function createEvent(events) {
@@ -47,13 +66,6 @@ function createEvent(events) {
         assert.ifError(err);
         console.log(obj.id);
     });
-}
-
-function printTalkInfo(talkId) {
-    var opt = buildOptions('/talks/'+talkId);
-    client.get(opt, function(err, req, res, obj) {
-        console.log('%s, %s', obj.id, obj.startTime);
-    })
 }
 
 function buildOptions(endpoint) {
